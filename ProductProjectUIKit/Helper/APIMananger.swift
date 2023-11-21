@@ -17,14 +17,48 @@ enum DataError : Error {
 }
 
 
-typealias Handler = (Result<[Product],  DataError>) -> Void
+//typealias Handler = (Result<[Product],  DataError>) -> Void
+typealias Handler<T> = (Result<T,  DataError>) -> Void
 
 
 class APIManager {
     static let shared = APIManager()
     
     private init(){}
-    func fetchProducts (completion: @escaping Handler ){
+    
+    func request <T: Decodable>(
+        modelType:T.Type,
+        type:EndPointType,
+        completion:@escaping Handler<T>
+    ) {
+        
+        guard let url = type.url else { return }
+        URLSession.shared.dataTask(with: url) {
+            data , response , error in
+            guard let data , error == nil else {
+                print("ERR:", error)
+                completion(.failure(.invalidData))
+                return
+
+            }
+            guard let response = response as? HTTPURLResponse ,
+                  200 ... 299 ~= response.statusCode else {
+                completion(.failure(.invalidResponse))
+                return
+            }
+            do {
+                let products = try JSONDecoder().decode(modelType.self , from: data)
+                completion(.success(products))
+            }
+            catch {
+                print("Unable to decode ..." , error)
+                completion(.failure(.network(error)))
+            }
+
+        }.resume()
+    }
+    
+   /* func fetchProducts (completion: @escaping Handler ){
         guard let url = URL(string: Constant.API.productURL) else { return }
         URLSession.shared.dataTask(with: url) {
             data , response , error in
@@ -32,7 +66,7 @@ class APIManager {
                 print("ERR:", error)
                 completion(.failure(.invalidData))
                 return
-                
+
             }
             guard let response = response as? HTTPURLResponse ,
                   200 ... 299 ~= response.statusCode else {
@@ -47,8 +81,9 @@ class APIManager {
                 print("Unable to decode ..." , error)
                 completion(.failure(.network(error)))
             }
-            
+
         }.resume()
     }
+    */
     
 }

@@ -17,18 +17,35 @@ final class ProductViewModel {
     
     func fetchProducts () {
         self.eventHandler?(.loading)
-        APIManager.shared.fetchProducts { response in
+        APIManager.shared.request(modelType: [Product].self, type: EndPointItems.products) {
+            response in
             self.eventHandler?(.stopLoading)
             switch response {
             case .success(let products):
-                
                 self.products = products
                 self.eventHandler?(.dataLoaded)
             case .failure(let error):
                 print(error)
                 self.eventHandler?(.error(error))
             }
+            
         }
+        
+        
+        
+        
+        /*    APIManager.shared.fetchProducts { response in
+         self.eventHandler?(.stopLoading)
+         switch response {
+         case .success(let products):
+         
+         self.products = products
+         self.eventHandler?(.dataLoaded)
+         case .failure(let error):
+         print(error)
+         self.eventHandler?(.error(error))
+         }
+         } */
     }
 }
 
